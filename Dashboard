@@ -1,0 +1,277 @@
+import React, { useState, useEffect } from "react";
+import { SecurityIncident, CommunityAlert, ProtectedAccount } from "@/entities/all";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  ArrowLeft,
+  Shield,
+  Check,
+  Home,
+  Settings,
+  Activity,
+  User,
+  Lock,
+  Fingerprint as Freeze, // Changed 'Freeze' to 'Fingerprint as Freeze'
+  DollarSign,
+  Wifi,
+  MapPin,
+  AlertTriangle,
+  Mail,
+  MessageSquare,
+  CreditCard,
+  Eye,
+  Users,
+  Map,
+  Mic,
+  Hand,
+  Info,
+  HelpCircle
+} from "lucide-react";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+
+import ThreatMap from "../components/dashboard/ThreatMap";
+import SecurityMetrics from "../components/dashboard/SecurityMetrics";
+import RecentIncidents from "../components/dashboard/RecentIncidents";
+import CommunityBeacon from "../components/dashboard/CommunityBeacon";
+import QuickActions from "../components/dashboard/QuickActions";
+
+export default function Dashboard() {
+  const [currentScreen, setCurrentScreen] = useState("dashboard");
+  const [incidents, setIncidents] = useState([]);
+  const [alerts, setAlerts] = useState([]);
+  const [accounts, setAccounts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const [incidentsData, alertsData, accountsData] = await Promise.all([
+        SecurityIncident.list("-created_date", 10),
+        CommunityAlert.list("-created_date", 5),
+        ProtectedAccount.list()
+      ]);
+      
+      setIncidents(incidentsData);
+      setAlerts(alertsData);
+      setAccounts(accountsData);
+    } catch (error) {
+      console.error("Error loading data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const renderDashboard = () => (
+    <div className="space-y-6">
+      <ThreatMap alerts={alerts} />
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <SecurityMetrics accounts={accounts} incidents={incidents} />
+          <RecentIncidents incidents={incidents} isLoading={isLoading} />
+        </div>
+        
+        <div className="space-y-6">
+          <CommunityBeacon alerts={alerts} />
+          <QuickActions />
+        </div>
+      </div>
+
+      {/* Floating SOS Button */}
+      <button 
+        onClick={() => setCurrentScreen("cybersos")}
+        className="fixed bottom-24 right-6 w-16 h-16 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 rounded-full flex items-center justify-center shadow-2xl z-20 animate-pulse"
+      >
+        <Shield className="w-8 h-8 text-white" />
+      </button>
+    </div>
+  );
+
+  const renderCyberSOS = () => (
+    <div className="space-y-6">
+      {/* Security Status */}
+      <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-green-600 rounded-xl flex items-center justify-center">
+            <Shield className="w-7 h-7 text-white" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold">Security Status</h3>
+            <p className="text-green-400 font-medium">Protection Active</p>
+            <p className="text-gray-400 text-sm">All systems monitored and secure</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Emergency Response Hub */}
+      <div className="bg-gradient-to-br from-red-600 via-orange-600 to-red-700 rounded-xl p-8 text-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="relative z-10">
+          <h2 className="text-3xl font-bold text-white mb-2">ResQnow</h2>
+          <h3 className="text-xl text-white/90 mb-4">Emergency Response System</h3>
+          <p className="text-white/80 mb-8 max-w-md mx-auto">
+            Instantly activate all cyber defense protocols if your digital assets are under attack
+          </p>
+          <Button
+            onClick={() => setCurrentScreen("emergencyProtocols")}
+            className="bg-white text-red-600 hover:bg-gray-100 font-bold px-8 py-4 text-lg rounded-xl shadow-lg"
+          >
+            ACTIVATE SOS PROTOCOLS
+          </Button>
+        </div>
+      </div>
+
+      {/* Protection Features Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[
+          { name: "Lock Vault", icon: Lock, description: "Self-destruct files", color: "blue" },
+          { name: "Decoy Mode", icon: Eye, description: "Honeypot trap", color: "purple" },
+          { name: "Kill Switch", icon: AlertTriangle, description: "Cut network", color: "red" },
+          { name: "ID Freeze", icon: Freeze, description: "Freeze credentials", color: "cyan" },
+          { name: "Geo Lock", icon: MapPin, description: "Location security", color: "green" },
+          { name: "Community", icon: Users, description: "Threat alerts", color: "orange" },
+        ].map((feature, index) => (
+          <div key={index} className="bg-slate-800 rounded-xl p-6 border border-slate-700 hover:border-blue-500 transition-all">
+            <div className={`w-12 h-12 bg-${feature.color}-500/20 rounded-xl flex items-center justify-center mb-4`}>
+              <feature.icon className={`w-6 h-6 text-${feature.color}-400`} />
+            </div>
+            <h3 className="font-bold text-white mb-1">{feature.name}</h3>
+            <p className="text-gray-400 text-sm">{feature.description}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderEmergencyProtocols = () => (
+    <div className="max-w-2xl mx-auto space-y-8">
+      <div className="text-center">
+        <div className="w-20 h-20 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Shield className="w-10 h-10 text-white" />
+        </div>
+        <h2 className="text-3xl font-bold mb-4">Emergency Protocol Activation</h2>
+        <p className="text-gray-400 mb-8 text-lg">Choose your preferred method to activate all cyber defense systems</p>
+      </div>
+
+      <div className="space-y-6">
+        <Link to={createPageUrl("VoiceActivation")}>
+          <Button className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white py-6 rounded-xl font-bold text-lg flex items-center justify-center gap-4 shadow-xl">
+            <Mic className="w-6 h-6" />
+            Voice Activation (Recommended)
+          </Button>
+        </Link>
+        
+        <Link to={createPageUrl("ManualActivation")}>
+          <Button
+            variant="outline"
+            className="w-full border-2 border-gray-600 text-white hover:bg-slate-800 py-6 rounded-xl font-bold text-lg bg-transparent flex items-center justify-center gap-4"
+          >
+            <Hand className="w-6 h-6" />
+            Manual Activation
+          </Button>
+        </Link>
+      </div>
+
+      <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-6 mt-8">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="w-6 h-6 text-orange-400 mt-1 flex-shrink-0" />
+          <div>
+            <h4 className="font-bold text-orange-400 mb-2">Emergency Use Only</h4>
+            <p className="text-gray-300 text-sm">
+              SOS activation will immediately lock all connected accounts, disconnect from networks, 
+              and alert authorities. Only use in case of confirmed cyber attack or data breach.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-slate-900 text-white">
+      {/* Header */}
+      <div className="border-b border-slate-700 bg-slate-900 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {currentScreen !== "dashboard" && (
+                <button onClick={() => setCurrentScreen("dashboard")}>
+                  <ArrowLeft className="w-6 h-6 text-gray-400 hover:text-white transition-colors" />
+                </button>
+              )}
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                {currentScreen === "dashboard" && "ResQnow Dashboard"}
+                {currentScreen === "cybersos" && "Emergency Response"}
+                {currentScreen === "emergencyProtocols" && "Protocol Activation"}
+              </h1>
+            </div>
+            <div className="flex items-center gap-4">
+              <Link to={createPageUrl("About")}>
+                <Button variant="ghost" size="icon">
+                  <Info className="w-5 h-5" />
+                </Button>
+              </Link>
+              <Link to={createPageUrl("HowToUse")}>
+                <Button variant="ghost" size="icon">
+                  <HelpCircle className="w-5 h-5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {currentScreen === "dashboard" && renderDashboard()}
+        {currentScreen === "cybersos" && renderCyberSOS()}
+        {currentScreen === "emergencyProtocols" && renderEmergencyProtocols()}
+      </div>
+
+      {/* Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-slate-800/95 backdrop-blur-sm border-t border-slate-700">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center justify-around py-4">
+            <button
+              onClick={() => setCurrentScreen("dashboard")}
+              className={`flex flex-col items-center gap-1 transition-colors ${
+                currentScreen === "dashboard" ? "text-blue-400" : "text-gray-400 hover:text-white"
+              }`}
+            >
+              <Home className="w-5 h-5" />
+              <span className="text-xs font-medium">Dashboard</span>
+            </button>
+            <button
+              onClick={() => setCurrentScreen("cybersos")}
+              className={`flex flex-col items-center gap-1 transition-colors ${
+                currentScreen === "cybersos" || currentScreen === "emergencyProtocols" ? "text-blue-400" : "text-gray-400 hover:text-white"
+              }`}
+            >
+              <Shield className="w-5 h-5" />
+              <span className="text-xs font-medium">SOS</span>
+            </button>
+            <Link to={createPageUrl("Protection")} className="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition-colors">
+              <Lock className="w-5 h-5" />
+              <span className="text-xs font-medium">Protection</span>
+            </Link>
+            <Link to={createPageUrl("Community")} className="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition-colors">
+              <Users className="w-5 h-5" />
+              <span className="text-xs font-medium">Community</span>
+            </Link>
+            <Link to={createPageUrl("Settings")} className="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition-colors">
+              <Settings className="w-5 h-5" />
+              <span className="text-xs font-medium">Settings</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom padding to prevent content from being hidden */}
+      <div className="h-20"></div>
+    </div>
+  );
+}
